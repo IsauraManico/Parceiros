@@ -175,19 +175,158 @@ curl "http://localhost:5176/api/partners?Search=Teste&Type=CUSTOMER"   # cliente
 curl "http://localhost:5176/api/partners?Search=Teste&Type=SUPPLIER"   # fornecedor e ambos
 curl "http://localhost:5176/api/partners?Search=Teste&Type=BOTH"       # só ambos
 
-Cenário 3 - Desativar e reativar
+Cenário 3 - Desativar e reativar uma entidade
+
+3.1. Desativar a entidade
+curl -i -X PUT 'http://localhost:5176/api/partners/<ID>' \
+ -H 'Content-Type: application/json' \
+ -d '{
+ "Name": "Ana Silva",
+ "TaxNumber": "001234568",
+ "Type": "CUSTOMER",
+ "Email": null,
+ "CreditLimit": 100,
+ "IsActive": false,
+ "Version": "<VERSION>"
+ }'
+Resultado esperado: 200 OK. A entidade fica inativa.
 
 curl -i -X PUT http://localhost:5176/api/partners/<ID> -H 'Content-Type: application/json' \
   -d '{"Name":"Ana Silva","TaxNumber":"001234568","Type":"CUSTOMER","Email":null,"CreditLimit":100,"IsActive":false,"Version":"<VERSION>"}'
 Resultado esperado: 200. A entidade deixa de aparecer em GET /api/partners, aparece com IncludeInactive=true e continua acessível em GET /api/partners/<ID>. Para reativar, repetir o PUT com IsActive verdadeiro e a Version devolvida pelo PUT anterior.
 
+Objetivo: validar a desativação e reativação de entidades, a unicidade do NIF e o controlo de
+concorrência através da propriedade Version.
+
+Antes de começar: confirme que a API está em execução em http://localhost:5176. Substitua os
+marcadores <ID>, <ID_ANA>, <VERSION> e semelhantes pelos valores reais devolvidos pela API. Não envie
+os sinais < > como parte dos valores.
+
+3.2. Confirmar que não aparece na listagem normal
+
+curl -i 'http://localhost:5176/api/partners'
+Resultado esperado: a entidade desativada não aparece na lista.
+3.3. Consultar incluindo entidades inativas
+curl -i 'http://localhost:5176/api/partners?IncludeInactive=true'
+Resultado esperado: a entidade aparece com IsActive: false.
+3.4. Consultar diretamente pelo ID
+curl -i 'http://localhost:5176/api/partners/<ID>'
+Resultado esperado: 200 OK, com os dados da entidade inativa.
+3.5. Reativar a entidade
+curl -i -X PUT 'http://localhost:5176/api/partners/<ID>' \
+ -H 'Content-Type: application/json' \
+ -d '{
+ "Name": "Ana Silva",
+ "TaxNumber": "001234568",
+ "Type": "CUSTOMER",
+ "Email": null,
+ "CreditLimit": 100,
+ "IsActive": true,
+ "Version": "<NOVA_VERSION>"
+ }'
+Resultado esperado: 200 OK. Use a versão mais recente devolvida pelo PUT que desativou a entidade;
+depois da reativação, ela volta a aparecer na listagem normal.
+
 Cenário 4 - Atualizar e NIF de outra entidade
 Atualizar uma entidade mantendo o próprio NIF devolve 200. Alterar o NIF para o de outra entidade devolve 409 e os dados anteriores mantém-se (pode confirmar-se com um GET pelo Id).
+4.1. Criar a primeira entidade (Ana)
+curl -i -X POST 'http://localhost:5176/api/partners' \
+ -H 'Content-Type: application/json' \
+ -d '{
+ "Name": "Ana Silva",
+ "TaxNumber": "001234568",
+ "Type": "CUSTOMER",
+ "Email": "ana@example.com",
+ "CreditLimit": 100
+ }'
+Resultado esperado: 201 Created. Guarde o Id e a Version devolvidos.
+4.2. Criar a segunda entidade (Carlos)
+curl -i -X POST 'http://localhost:5176/api/partners' \
+ -H 'Content-Type: application/json' \
+ -d '{
+ "Name": "Carlos Mendes",
+ "TaxNumber": "001234569",
+ "Type": "SUPPLIER",
+ "Email": "carlos@example.com",
+ "CreditLimit": 0
+ }'
+Resultado esperado: 201 Created. Guarde também o Id e a Version.
+4.3. Atualizar Ana mantendo o próprio NIF
+curl -i -X PUT 'http://localhost:5176/api/partners/<ID_ANA>' \
+ -H 'Content-Type: application/json' \
+ -d '{
+ "Name": "Ana Silva Atualizada",
+ "TaxNumber": "001234568",
+ "Type": "CUSTOMER",
+ "Email": "ana.nova@example.com",
+ "CreditLimit": 200,
+ "IsActive": true,
+ "Version": "<VERSION_ANA>"
+ }'
+Resultado esperado: 200 OK. Os campos são atualizados e o NIF original é mantido.
+4.4. Tentar usar o NIF de Carlos na entidade de Ana
+curl -i -X PUT 'http://localhost:5176/api/partners/<ID_ANA>' \
+ -H 'Content-Type: application/json' \
+ -d '{
+ "Name": "Ana Silva",
+ "TaxNumber": "001234569",
+ "Type": "CUSTOMER",
+ "Email": "ana@example.com",
+ "CreditLimit": 100,
+ "IsActive": true,
+ "Version": "<VERSION_ANA_ATUALIZADA>"
+ }'
+Resultado esperado: 409 Conflict, porque o NIF já pertence a Carlos.
+4.5. Confirmar que os dados anteriores foram preservados
+curl -i 'http://localhost:5176/api/partners/<ID_ANA>'
+Resultado esperado: 200 OK. Ana continua com o NIF 001234568; a tentativa rejeitada não deve alterar
+os dados.
+
+
 
 Cenário 5 - Concorrencia
 Repetir o mesmo PUT, com a mesma Version, duas vezes: a primeira devolve 200 e a segunda 409. Para o caso de dois pedidos verdadeiramente simultaneos, usar os testes automticos C5, que disparam dez criações em paralelo com o mesmo NIF e verificam que existe um 201, nove 409 e um único registo:
 
 dotnet test --filter "FullyQualifiedName~C5"
+
+5.1. Criar uma entidade de teste
+curl -i -X POST 'http://localhost:5176/api/partners' \
+ -H 'Content-Type: application/json' \
+ -d '{
+ "Name": "Teste Concorrencia",
+ "TaxNumber": "009876543",
+ "Type": "CUSTOMER",
+ "Email": "teste@example.com",
+ "CreditLimit": 100
+ }'
+Resultado esperado: 201 Created. Guarde o Id e a versão original.
+5.2. Executar o primeiro PUT
+curl -i -X PUT 'http://localhost:5176/api/partners/<ID>' \
+ -H 'Content-Type: application/json' \
+ -d '{
+ "Name": "Teste Concorrencia Atualizado",
+ "TaxNumber": "009876543",
+ "Type": "CUSTOMER",
+ "Email": "teste@example.com",
+ "CreditLimit": 150,
+ "IsActive": true,
+ "Version": "<VERSION_ORIGINAL>"
+ }'
+Resultado esperado: 200 OK. Guarde a nova versão devolvida pela API.
+5.3. Repetir o PUT usando a versão antiga
+Execute novamente o comando anterior, sem alterar <VERSION_ORIGINAL>.
+Resultado esperado: 409 Conflict, pois a versão enviada já não é a versão atual.
+5.4. Executar os testes automáticos de concorrência
+Na pasta do projeto onde se encontra o ficheiro .csproj, execute:
+dotnet test --filter "FullyQualifiedName~C5"
+
+Verificação Resultado esperado
+Criações bem-sucedidas 1 resposta 201 Created
+Criações rejeitadas por conflito 9 respostas 409 Conflict
+Registos persistidos com o mesmo NIF 1 registo
+O teste C5 descrito deve disparar dez criações em paralelo com o mesmo NIF e confirmar uma criação
+bem-sucedida, nove conflitos e apenas um registo. A garantia depende da implementação correta da
+validação e da unicidade na base de dados
 
 Cenário 6 - Erros 400
 
