@@ -1,5 +1,5 @@
 Objetivo
-Este documento explica como instalar, configurar e executar a API de clientes e fornecedores num computador com Ubuntu, e descreve o que o projeto contém: as tecnologias usadas, a organização dos ficheiros, as classes e a forma de testar cada funcionalidade.
+Este documento explica como instalar, configurar, realizar cenarios de teste e executar a API de clientes e fornecedores num computador com Ubuntu, e descreve o que o projeto contém: as tecnologias usadas, a organização dos ficheiros, as classes e a forma de testar cada funcionalidade.
 O projeto responde ao enunciado da Fase 2 do teste técnico: uma API em ASP.NET Core, com Entity Framework Core e SQL Server, para gerir clientes e fornecedores de uma única empresa. Uma entidade pode ser cliente, fornecedor ou ambos, e só pode existir um registo por NIF.
 São apresentados dois cenários de instalaão da base de dados: com Docker (mais rápido) e sem Docker (SQL Server instalado diretamente no Ubuntu). Basta seguir um deles.
 Todos os comandos foram escritos para o terminal do Ubuntu. Os que começam por sudo pedem a palavra-passe do utilizador.
