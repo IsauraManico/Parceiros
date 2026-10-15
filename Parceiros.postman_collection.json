@@ -1,0 +1,396 @@
+{
+  "info": {
+    "name": "API Parceiros",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "host",
+      "value": "http://localhost:5176"
+    },
+    {
+      "key": "id",
+      "value": ""
+    },
+    {
+      "key": "version",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Criar cliente (201)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{host}}/api/partners",
+          "host": [
+            "{{host}}"
+          ],
+          "path": [
+            "api",
+            "partners"
+          ],
+          "query": []
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"Name\": \"  Ana Silva  \",\n  \"TaxNumber\": \"001.234.568\",\n  \"Type\": \"CUSTOMER\",\n  \"Email\": \"ana@exemplo.pt\",\n  \"CreditLimit\": 1500.5\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const j = pm.response.json();",
+              "pm.collectionVariables.set('id', j.Id);",
+              "pm.collectionVariables.set('version', j.Version);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "1b. NIF duplicado (409)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{host}}/api/partners",
+          "host": [
+            "{{host}}"
+          ],
+          "path": [
+            "api",
+            "partners"
+          ],
+          "query": []
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"Name\": \"Outra\",\n  \"TaxNumber\": \"001 234 568\",\n  \"Type\": \"SUPPLIER\",\n  \"CreditLimit\": 10\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "2. Obter por Id (200)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{host}}/api/partners/{{id}}",
+          "host": [
+            "{{host}}"
+          ],
+          "path": [
+            "api",
+            "partners",
+            "{{id}}"
+          ],
+          "query": []
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const j = pm.response.json();",
+              "pm.collectionVariables.set('id', j.Id);",
+              "pm.collectionVariables.set('version', j.Version);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Desativar via PUT (200)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{host}}/api/partners/{{id}}",
+          "host": [
+            "{{host}}"
+          ],
+          "path": [
+            "api",
+            "partners",
+            "{{id}}"
+          ],
+          "query": []
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"Name\": \"Ana Silva\",\n  \"TaxNumber\": \"001234568\",\n  \"Type\": \"BOTH\",\n  \"Email\": null,\n  \"CreditLimit\": 2000,\n  \"IsActive\": false,\n  \"Version\": \"{{version}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "const j = pm.response.json();",
+              "pm.collectionVariables.set('id', j.Id);",
+              "pm.collectionVariables.set('version', j.Version);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3b. PUT com versão antiga (409)",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{host}}/api/partners/{{id}}",
+          "host": [
+            "{{host}}"
+          ],
+          "path": [
+            "api",
+            "partners",
+            "{{id}}"
+          ],
+          "query": []
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"Name\": \"Ana Silva\",\n  \"TaxNumber\": \"001234568\",\n  \"Type\": \"BOTH\",\n  \"Email\": null,\n  \"CreditLimit\": 2000,\n  \"IsActive\": false,\n  \"Version\": \"AAAAAAAAAAA=\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "4. Listar",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{host}}/api/partners",
+          "host": [
+            "{{host}}"
+          ],
+          "path": [
+            "api",
+            "partners"
+          ],
+          "query": []
+        }
+      }
+    },
+    {
+      "name": "4b. Filtros combinados",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{host}}/api/partners?Search=ana&Type=CUSTOMER&IncludeInactive=true&Page=1&PageSize=5",
+          "host": [
+            "{{host}}"
+          ],
+          "path": [
+            "api",
+            "partners"
+          ],
+          "query": [
+            {
+              "key": "Search",
+              "value": "ana"
+            },
+            {
+              "key": "Type",
+              "value": "CUSTOMER"
+            },
+            {
+              "key": "IncludeInactive",
+              "value": "true"
+            },
+            {
+              "key": "Page",
+              "value": "1"
+            },
+            {
+              "key": "PageSize",
+              "value": "5"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "5. CreditLimit 10.999 (400)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{host}}/api/partners",
+          "host": [
+            "{{host}}"
+          ],
+          "path": [
+            "api",
+            "partners"
+          ],
+          "query": []
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"Name\": \"Teste\",\n  \"TaxNumber\": \"123456780\",\n  \"Type\": \"BOTH\",\n  \"CreditLimit\": 10.999\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "5b. NIF com letras (400)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{host}}/api/partners",
+          "host": [
+            "{{host}}"
+          ],
+          "path": [
+            "api",
+            "partners"
+          ],
+          "query": []
+        },
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"Name\": \"Teste\",\n  \"TaxNumber\": \"12345678A\",\n  \"Type\": \"BOTH\",\n  \"CreditLimit\": 1\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "5c. Page=0 (400)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{host}}/api/partners?Page=0",
+          "host": [
+            "{{host}}"
+          ],
+          "path": [
+            "api",
+            "partners"
+          ],
+          "query": [
+            {
+              "key": "Page",
+              "value": "0"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "5d. Type inválido (400)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{host}}/api/partners?Type=OUTRO",
+          "host": [
+            "{{host}}"
+          ],
+          "path": [
+            "api",
+            "partners"
+          ],
+          "query": [
+            {
+              "key": "Type",
+              "value": "OUTRO"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "6. Id inexistente (404)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{host}}/api/partners/00000000-0000-0000-0000-000000000001",
+          "host": [
+            "{{host}}"
+          ],
+          "path": [
+            "api",
+            "partners",
+            "00000000-0000-0000-0000-000000000001"
+          ],
+          "query": []
+        }
+      }
+    }
+  ]
+}

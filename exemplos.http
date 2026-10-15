@@ -1,0 +1,64 @@
+### Exemplos HTTP (extensão "REST Client" do VS Code, ou JetBrains HTTP Client)
+@host = http://localhost:5176
+
+### 1. Criar cliente (Name com espaços, NIF formatado) -> 201 + Location, guarda "Ana Silva" e "001234567"
+# @name criar
+POST {{host}}/api/partners
+Content-Type: application/json
+
+{ "Name": "  Ana Silva  ", "TaxNumber": "001.234.568", "Type": "CUSTOMER", "Email": "ana@exemplo.pt", "CreditLimit": 1500.50 }
+
+### 1b. Mesmo NIF com outra formatação -> 409
+POST {{host}}/api/partners
+Content-Type: application/json
+
+{ "Name": "Outra Pessoa", "TaxNumber": "001 234 568", "Type": "SUPPLIER", "CreditLimit": 10 }
+
+### 2. Obter por Id (usa o Id devolvido em "criar")
+@id = {{criar.response.body.Id}}
+GET {{host}}/api/partners/{{id}}
+
+### 3. Atualizar / desativar (Version obrigatória: copie a da resposta anterior)
+PUT {{host}}/api/partners/{{id}}
+Content-Type: application/json
+
+{
+  "Name": "Ana Silva", "TaxNumber": "001234568", "Type": "BOTH", "Email": null,
+  "CreditLimit": 2000, "IsActive": false, "Version": "{{criar.response.body.Version}}"
+}
+
+### 4. Listar (ativos, página 1)
+GET {{host}}/api/partners
+
+### 4b. Filtros combinados: pesquisa + tipo + inativos + paginação
+GET {{host}}/api/partners?Search=ana&Type=CUSTOMER&IncludeInactive=true&Page=1&PageSize=5
+
+### 4c. Pesquisa por NIF com separadores
+GET {{host}}/api/partners?Search=001.234
+
+### 5. Erros 400: limite com 3 casas decimais
+POST {{host}}/api/partners
+Content-Type: application/json
+
+{ "Name": "Teste", "TaxNumber": "123456780", "Type": "BOTH", "CreditLimit": 10.999 }
+
+### 5b. NIF com letras
+POST {{host}}/api/partners
+Content-Type: application/json
+
+{ "Name": "Teste", "TaxNumber": "12345678A", "Type": "BOTH", "CreditLimit": 1 }
+
+### 5c. Page=0 -> 400
+GET {{host}}/api/partners?Page=0
+
+### 5d. Type inválido -> 400
+GET {{host}}/api/partners?Type=OUTRO
+
+### 5e. Version malformada -> 400
+PUT {{host}}/api/partners/{{id}}
+Content-Type: application/json
+
+{ "Name": "Ana Silva", "TaxNumber": "001234568", "Type": "BOTH", "Email": null, "CreditLimit": 2000, "IsActive": true, "Version": "isto-nao-e-versao" }
+
+### 6. Id inexistente -> 404
+GET {{host}}/api/partners/00000000-0000-0000-0000-000000000001
